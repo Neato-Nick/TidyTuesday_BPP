@@ -21,5 +21,7 @@ Here are the steps, pasted from the link above
 * `git remote add upstream https://github.com/Neato-Nick/TidyTuesday_BPP.git`
 * `git checkout -b <new branch name>`
 * add files/make changes on the branch
+  * `git add <file1> <file2> ... <filen>`
+  * `git commit -m 'Week 1 submission'`
 * `git push origin <branch name>`
 * github will prompt you to make a pull request, do it
