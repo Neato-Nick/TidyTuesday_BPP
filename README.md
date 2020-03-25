@@ -15,7 +15,8 @@ Then, make a pull request to merge your changes with the 'master' branch of this
 This tutorial is helpful:
 https://blog.scottlowe.org/2015/01/27/using-fork-branch-git-workflow/
 
-Here are the steps, pasted from the link above
+Here are the steps, pasted from the link above.
+With git installed, you can do these commands in the git command-line.
 * Fork (using the fork button on github)
 * `git clone https://github.com/Neato-Nick/TidyTuesday_BPP.git`
 * `git remote add upstream https://github.com/Neato-Nick/TidyTuesday_BPP.git`
@@ -25,3 +26,7 @@ Here are the steps, pasted from the link above
   * `git commit -m 'Week 1 submission'`
 * `git push origin <branch name>`
 * github will prompt you to make a pull request, do it
+
+If you've never used git and are trying to avoid it all costs, Rstudio has git/github integration these days and it actually works really well in my experience.
+https://happygitwithr.com/rstudio-git-github.html
+In Rstudio, you can do all the steps above after forking and up until the pull request.
