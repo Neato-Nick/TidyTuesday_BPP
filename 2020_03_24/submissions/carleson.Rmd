@@ -1,0 +1,109 @@
+---
+title: "Modifying tidy text"
+author: "Nick Carleson"
+date: "3/24/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## original code
+
+```{r, fig.width=8, fig.height=8}
+library(schrute)
+library(tidyverse)
+
+officedata <- schrute::theoffice
+
+stop_words <- tidytext::stop_words
+
+# function to pull the top words for any one season
+adjust_words <- function(x = "01", df = officedata, n_words = 30) {
+  season_x <- df %>%
+    dplyr::filter(season == x)
+  season_x_words <- tidytext::unnest_tokens(season_x, word, text) %>%
+    anti_join(stop_words, by = "word") %>%
+    count(word, sort = TRUE) %>%
+    top_n(n_words) %>%
+    mutate(word = stats::reorder(word, n),
+           season = x) 
+  
+  return(season_x_words)
+}
+
+# plot the results of just one season
+ggplot(adjust_words(), aes(x = word, y = n)) +
+  geom_col() +
+  coord_flip()
+
+# now, how can we plot all seasons?
+# map our custom function to a vector of all season names
+all_seasons <- unique(officedata$season)
+# output is a dataframe
+words_all_seasons <- map(all_seasons, adjust_words) %>%
+  bind_rows()
+ggplot(words_all_seasons, aes(x = word, y = n)) +
+  facet_wrap(vars(season), scales = "free") +
+  geom_col() +
+  coord_flip()
+
+# I didn't like the random order, so here we will make 'factored' version
+words_all_seasons <- map(all_seasons, adjust_words) %>%
+  bind_rows() %>%
+  arrange(season, n) %>%
+  mutate(word = forcats::fct_inorder(word))
+ggplot(words_all_seasons, aes(x = word, y = n)) +
+  facet_wrap(vars(season), scales = "free") +
+  geom_col() +
+  coord_flip()
+
+# basically, each facet retains the order from the previous facet
+# and just adds the new words to the beginning
+words_all_seasons <- map(all_seasons, adjust_words) %>%
+  bind_rows() %>%
+  # arrange the rows so each facet is sorted independently
+  arrange(season, desc(n)) %>%
+  # add a column that has the correct order of words in a season
+  # by giving each word a unique label, we avoid any sorting issues from ggplot
+  mutate(season_word = factor(paste(word, season, sep = "__"),
+                              levels = rev(paste(word, season, sep = "__"))))
+# make sure you plot using the new column we create
+ggplot(words_all_seasons, aes(x = season_word, y = n)) +
+  facet_wrap(vars(season), scales = "free") +
+  geom_col() +
+  # fix the labels to hide our evidence...
+  scale_x_discrete(labels = function(x) gsub("__.+$", "", x)) +
+  coord_flip()
+
+
+# but now this feels like lying... the bars don't track across
+# so to be clear, let's do a line graph of the top n words from season 1
+# across the seasons
+n_words = 6
+words_all_seasons_filtered <- words_all_seasons %>%
+  dplyr::filter(word %in% head(words_all_seasons$word, n_words))
+                
+ggplot() +
+  geom_point(aes(x = season, y = n, color = word, group = word),
+             words_all_seasons_filtered) +
+  geom_line(aes(x = season, y = n, color = word, group = word),
+            words_all_seasons_filtered) +
+  scale_color_viridis_d()
+
+# interesting that the words go up... I had a feeling the total word count went up, and sure enough it did
+total_words <- words_all_seasons %>%
+               group_by(season) %>%
+               summarize(n_total = sum(n))
+knitr::kable(total_words)
+
+ggplot() +
+  geom_col(aes(x = season, y = n_total), total_words, fill = "gray75") +
+  geom_point(aes(x = season, y = n, color = word, group = word),
+             words_all_seasons_filtered) +
+  geom_line(aes(x = season, y = n, color = word, group = word),
+            words_all_seasons_filtered) +
+  scale_color_viridis_d() +
+  scale_y_log10(breaks = c(1, 10, seq(100, 500, 100), seq(1000, 4000, 1000)))
+```
