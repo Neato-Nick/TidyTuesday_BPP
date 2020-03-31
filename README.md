@@ -1,7 +1,7 @@
 # TidyTuesday for BPP
 ## BPP and BPP alums meet for Tidy Tuesday!
 
-Calls are on Zoom weekly, Tuesdays at 1pm.
+Calls are on Zoom weekly, Tuesdays at 1pm (Oregon Time).
 Catie Wram will host these meetings.
 
 ## Uploading your work
