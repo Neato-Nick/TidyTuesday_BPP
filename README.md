@@ -33,3 +33,23 @@ In Rstudio, you can do all the steps above after forking and up until the pull r
 
 I used this tutorial for set-up:
 http://www.geo.uzh.ch/microsite/reproducible_research/post/rr-rstudio-git/
+
+Each week, to freshen your fork of this repository, you'll need to use two git commands.
+I don't think Rstudio can do this.
+
+You can open the git terminal from Rstudio and then do this:
+Rstudio Tools -> Shell..
+```
+git pull upstream master
+git push origin master
+```
+
+If you've been working off your own custom-named branch: delete it, sync your master branch, and make a new branch for the week
+```
+git checkout master
+git branch -d <NAME OF YOUR DEVELOPMENT BRANCH>
+git push origin master
+git push --delete origin <NAME OF DEVEL BRANCH>
+git pull upstream master
+git push origin master
+```
