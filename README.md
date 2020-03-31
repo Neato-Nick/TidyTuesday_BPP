@@ -30,3 +30,6 @@ With git installed, you can do these commands in the git command-line.
 If you've never used git and are trying to avoid it all costs, Rstudio has git/github integration these days and it actually works really well in my experience.
 https://happygitwithr.com/rstudio-git-github.html
 In Rstudio, you can do all the steps above after forking and up until the pull request.
+
+I used this tutorial for set-up:
+http://www.geo.uzh.ch/microsite/reproducible_research/post/rr-rstudio-git/
