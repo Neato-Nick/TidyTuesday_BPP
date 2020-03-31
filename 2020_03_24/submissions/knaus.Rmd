@@ -1,0 +1,87 @@
+---
+title: "The Office"
+author: "Brian J. Knaus"
+date: "`r format(Sys.time(), '%Y, %B %d')`"
+output: 
+  html_document:
+    toc: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.height = 6)
+knitr::opts_chunk$set(fig.width = 6)
+```
+
+
+## Libraries
+
+```{r}
+library(schrute)
+library(tidyverse)
+```
+
+
+## The data
+
+
+```{r}
+officedata <- schrute::theoffice
+officedata
+```
+
+
+## Subset the data
+
+
+```{r}
+my_words <- officedata[officedata$season == 1, ]
+my_words <- unlist(strsplit(my_words$text, split = " "))
+my_words <- sort(table(my_words), decreasing = TRUE)
+my_words <- my_words[ !tidytext::stop_words$word %in% my_words ]
+```
+
+
+```{r}
+my_words[1:30]
+my_words["yeah"]
+my_words["uh"]
+```
+
+
+## Barplot
+
+```{r, fig.height=10}
+barplot(my_words[1:30], horiz = TRUE, las = 2)
+
+```
+
+
+## Tidy
+
+```{r}
+
+# season_x <- df %>%
+my_season <- officedata %>% dplyr::filter(season == 1)
+nrow(my_season)
+
+season_x_words <- tidytext::unnest_tokens(my_season, output = word, input = text)
+nrow(season_x_words)
+#season_x_words$word
+season_x_words <- dplyr::anti_join(season_x_words, tidytext::stop_words,
+                                   by = "word")
+nrow(season_x_words)
+
+
+    # dplyr::count(word, sort = TRUE)
+    # 
+    # top_n(n_words) %>%
+    # mutate(word = stats::reorder(word, n),
+    #        season = x) 
+
+```
+
+
+
