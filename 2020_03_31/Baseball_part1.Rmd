@@ -1,0 +1,96 @@
+---
+title: "BPP Hacky Hour Baseball Part I"
+author: "Alexander Wong"
+date: "3/31/2020"
+output: html_document
+---
+
+
+# Question: Do rich baseball teams win more games than poor teams?
+## We will use [Sean Lahman's](https://github.com/cdalzell/Lahman) baseball database package to look at baseball economics
+
+Baseball, surprisingly is one of the richest games in the USA. There is also no salary cap in baseball, which means that any team can pay any player any amount. So teams that are owned by billionaires can spend big money to get big name players. So there is a huge disparity between the teams such as the relatively poor (about 50 million) Pittsburgh Pirates (my favorite team....) and the wealthy (about 250 million) Boston Red Sox. So do the teams that have huge payrolls win more games than the teams that are poorer? Lets take a historical dive into the economics of baseball team performance!
+
+First attach the packages we will need to use
+
+```{r Open packages, warning=FALSE}
+library(Lahman)
+library(tidyverse)
+library(purrr)
+```
+
+### The Lahman package contains large databases of statistics (Batting, pitching, fielding) dating back to the 1880's. However we are just going to be looking at team wins and payroll since 1985.
+
+```{r Import Data}
+data(Teams)
+data(Salaries)
+```
+
+## Payroll for each team for each year
+### Salary is the amount of money each player is paid in a season
+### Payroll is the amount of money the team spends on the players
+```{r Salary data}
+TeamSalaries<- Salaries%>%
+  #Data from 1900 and after
+  filter(Salaries$yearID>= 1900)%>%
+  #split data by teams
+  split(.$teamID)%>%
+  #Group data by season and team
+  map(group_by, yearID, teamID)%>%
+  #Summarise payroll as the sum of each player's salary for each season
+  map(summarise, payroll = sum(salary))
+
+#Take list data and reduce back into a dataframe
+TeamPayroll.df<- Reduce(rbind, TeamSalaries)
+#Order by year and team name
+TeamPayroll.df<- TeamPayroll.df[order(TeamPayroll.df$yearID, TeamPayroll.df$teamID),]
+
+#Plot payroll for each team over time
+ggplot(TeamPayroll.df, aes(x=yearID, y=payroll, color =teamID))+geom_line()+
+  xlab("Year")+
+  ylab("Payroll ($)")+
+  ggtitle("Payroll totals over time")
+```
+
+Here you can see the payroll of teams generally increases every season and has greater spread than in years prior.
+
+## Wins for each team in each season
+```{r Wins}
+TeamWins<- Teams%>%
+  #Filter data to match that of the salary data (only covers 1985-2016)
+  filter(yearID>=1985)%>%
+  filter(yearID<=2016)
+#Add the payroll data to the Team statistics dataframe
+TeamWins$payroll<- as.numeric(TeamPayroll.df$payroll)
+```
+
+## Now let's plot wins as a function of payroll.
+
+```{r Plot of wins and payroll}
+ggplot(TeamWins, aes(x=payroll, y= W))+
+  geom_point()+xlab("Payroll ($)")+
+  ylab("Team Wins")+
+  ggtitle("Team wins by Payroll spent")
+```
+
+At first glance you might think that we can stop here but the data seems to be skewed with there being a lot more points at the low end of payroll.
+
+## Now lets break it down by year to see if there are trends from year to year
+
+```{r Wins as a funtion of payroll for each season}
+ggplot(TeamWins, aes(x=(payroll/1000000), y=W))+
+  geom_point()+
+  facet_wrap(.~yearID)+
+  theme_bw()+
+  xlab("Payroll (Millions of $)")+
+  ylab("Team Wins")
+```
+
+Yes, as was seen earlier with the payroll, its has been steadily increasing since 1985. It is unfair to compare the 1987 Texas Rangers who spent all of `r  format(TeamWins$payroll[which.min(TeamWins$payroll)], scientific = F)` bucks on payroll for 75 wins as opposed to the 2013 Yankees who spent a whopping `r format(TeamWins$payroll[which.max(TeamWins$payroll)], scientific = F)` bucks for a team that won only ten more games. Does this mean that the 1987 Rangers are super efficient at extracting wins per dollar? No. The value of the dollar in baseball has changed a lot since 1985 due to inflation, and just the fact that teams have a lot of money because they are owned by billionaires. 
+
+# The problem: 
+## How can we compare how money changes performance of a team when the amount of money spent each year is different year to year?
+
+### What can we do to the data to fairly compare money spent to team performance across seasons? And if we do change the data, how can we interpret the input (money) as a function of output (Wins)?
+
+Side note: If any of this is interesting to anyone besides me, I would highly recommend that during your time in quarantine to watch the movie 'Moneyball' staring Brad Pitt and Jonah Hill. It's a really good movie about how the Oakland Athletics general manager, Billy Beane completely changed how teams spend money on players. And if you are even more interested, you can read the book by Michael Lewis that the movie is based on.
