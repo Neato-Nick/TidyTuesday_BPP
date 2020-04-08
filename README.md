@@ -4,6 +4,10 @@
 Calls are on Zoom weekly, Tuesdays at 1pm (Oregon Time).
 Catie Wram will host these meetings.
 
+## Next meeting
+
+[351028005](https://oregonstate.zoom.us/j/351028005)
+
 ## Uploading your work
 Post all work to the submissions folder under whichever week you did it for.
 
