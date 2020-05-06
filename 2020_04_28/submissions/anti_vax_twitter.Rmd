@@ -1,0 +1,198 @@
+---
+title: "Tidy Tuesday Apr 28"
+author: "Nick Carleson"
+date: "April 28, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## How do anti-vaxers and vax-friendly Twitter users organize?
+
+Anti-vax movement surprisingly popular.
+Both people and Twitter itself can be manipulated easily.
+One visible outcome of manipulation is hashtags.
+How does hashtag use vary between anti-vaxxers and vax-friendly twitter users?
+What hashtags are used to signal the "side" you're on?
+
+Using a dataset scraped from Twitter, we will classify ~90k tweets on the subject of vaccination as either "anti-vax" or "vax-friendly".
+We will look at distribution of the data in various ways, including timezone.
+Some theorize that Russian bots drive Twitter activity, maybe we can find certain memes among the Russian timezone?
+Then, we will compare the top hashtags used by each side.
+To search for why a certain hashtag was chosen, we will further evaluate the sentiment of each hashtag on its own.
+
+## Load libraries
+
+```{r load_data_libs}
+library(magrittr)
+library(tidyverse)
+library(leaflet)
+
+library(sentimentr)
+
+library(tidytext)
+
+library(wordcloud)
+```
+
+## Issues
+
+Well the UTF encoding wasn't great in that CSV, there are already issues
+
+```{r}
+# vax_base <- read.csv("vaccination2.csv")
+# head(vax_base)
+
+vax_tidy <- read_csv("vaccination2.csv")
+head(vax_tidy)
+```
+
+
+## Sentiment classification
+
+I don't want to use individual words at first, but whole sentences.
+First, unnest the data so each tweet is broken up into multiple sentences.
+Then calculate the sentiment by sentence within tweets
+
+```{r}
+presidential_debates_2012 %>%
+  dplyr::mutate(dialogue_split = get_sentences(dialogue)) %$%
+  sentiment_by(dialogue_split, list(person, time))
+
+vax_sent1 <- vax_tidy %>%
+  dplyr::mutate(tweet_split = get_sentences(tweet)) %$%
+  sentiment_by(tweet_split, list(username, hashtags))
+
+vax_sent1
+```
+```{r, fig.height=50}
+head(vax_sent1)
+
+vax_sent1_avgs <- vax_sent1 %>%
+  summarise(median_word = median(word_count, na.rm = TRUE),
+            mean_word = mean(word_count, na.rm = TRUE),
+            median_sent = median(ave_sentiment, na.rm = TRUE),
+            mean_sent = mean(ave_sentiment, na.rm = TRUE))
+
+knitr::kable(vax_sent1_avgs)
+
+ggplot(vax_sent1, aes(x = word_count, y = ave_sentiment)) +
+  geom_point() +
+  scale_x_log10() +
+  geom_hline(data = vax_sent1_avgs, mapping = aes(yintercept = median_sent),
+             color = "purple", linetype = "dashed") +
+  geom_vline(data = vax_sent1_avgs, mapping = aes(xintercept = median_word),
+             color = "goldenrod", linetype = "dashed")
+```
+
+## Geotweetology
+
+Are the Russians in control?
+
+This was kind of a bust - turns out I only have one timezone in my data.
+
+```{r}
+knitr::kable(vax_tidy %>% distinct(timezone))
+```
+
+At least this narrows our study - how do people who tweet from the Eastern Africa time zone feel about vaccination? And how do they organize?
+
+## Hashtag usage
+
+What hashtags do people use?
+Are there certain hashtags characteristic of each side?
+
+I was hoping to do a word-sentiment analysis of these, but that seems daunting
+
+`r vax_sent1 %>% distinct(hashtags)`
+
+At the very least let's try and make a hashtag cloud
+
+* Convert dataframe to long with the hashtags
+This implementation also removes non-unique rows, and converts empty cells to NA
+
+```{r tidy_tags}
+vax_sent1_hashtag_long <- vax_sent1 %>%
+  separate_rows(hashtags)
+```
+```{r}
+tidy_tags <- vax_sent1_hashtag_long %>%
+  distinct() %>%
+  mutate_all(na_if, "") %>%
+  drop_na(hashtags)
+
+knitr::kable(head(tidy_tags))
+```
+
+* contrast bar plot
+
+```{r}
+tidy_tag_counts <- tidy_tags %>%
+  count(hashtags, ave_sentiment, sort = TRUE) %>%
+  mutate_if(is.character, forcats::fct_inorder)
+
+knitr::kable(head(tidy_tag_counts))
+
+tidy_tag_counts %>%
+  filter(n > 1) %>%
+  ggplot(aes(x = ave_sentiment, y= n, label = hashtags)) +
+  geom_text()
+
+ggplot(tidy_tag_counts) +
+  geom_text(aes(x = ave_sentiment, y = n, label = hashtags)) +
+  scale_x_log10()
+
+# tidy_tag_counts %>%
+#   filter(n > 10) %>%
+#   ggplot(aes(rev(hashtags), n, fill = ave_sentiment)) +
+#   geom_col() +
+#   scale_fill_viridis_c() +
+#   coord_flip() +
+#   theme_bw()
+
+
+```
+
+* comparison.cloud
+
+```{r tags_cloud}
+# tidy_tags %>%
+#   count(hashtags, ave_sentiment, sort = TRUE)  %>%
+#   reshape2::acast(hashtags ~ ave_sentiment, value.var = "n", fill = 0) %>%
+#   comparison.cloud(colors = c("#F8766D", "#00BFC4"),
+#                    max.words = 100)
+
+```
+
+
+```{r exa, include = FALSE}
+library(janeaustenr)
+
+original_books <- austen_books() %>%
+  group_by(book) %>%
+  mutate(line = row_number(),
+         chapter = cumsum(str_detect(text, regex("^chapter [\\divxlc]",
+                                                 ignore_case = TRUE)))) %>%
+  ungroup()
+
+tidy_books <- original_books %>%
+  unnest_tokens(word, text)
+
+# cleaned_books <- tidy_books %>%
+#   dplyr::anti_join(tidytext::get_stopwords())
+bing <- get_sentiments("bing")
+
+tidy_books %>%
+  inner_join(bing) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  reshape2::acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("#F8766D", "#00BFC4"),
+                   max.words = 100)
+
+tidy_books %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+```
+

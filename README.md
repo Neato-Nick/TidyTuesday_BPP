@@ -4,6 +4,10 @@
 Calls are on Zoom weekly, Tuesdays at 1:00 PM (PST).
 Catie Wram will host these meetings.
 
+## Next meeting
+
+[351028005](https://oregonstate.zoom.us/j/351028005)
+
 ## Uploading your work
 Post all work to the submissions folder under whichever week you did it for.
 
@@ -30,3 +34,26 @@ With git installed, you can do these commands in the git command-line.
 If you've never used git and are trying to avoid it all costs, Rstudio has git/github integration these days and it actually works really well in my experience.
 https://happygitwithr.com/rstudio-git-github.html
 In Rstudio, you can do all the steps above after forking and up until the pull request.
+
+I used this tutorial for set-up:
+http://www.geo.uzh.ch/microsite/reproducible_research/post/rr-rstudio-git/
+
+Each week, to freshen your fork of this repository, you'll need to use two git commands.
+I don't think Rstudio can do this.
+
+You can open the git terminal from Rstudio and then do this:
+Rstudio Tools -> Shell..
+```
+git pull upstream master
+git push origin master
+```
+
+If you've been working off your own custom-named branch: delete it, sync your master branch, and make a new branch for the week
+```
+git checkout master
+git branch -d <NAME OF YOUR DEVELOPMENT BRANCH>
+git push origin master
+git push --delete origin <NAME OF DEVEL BRANCH>
+git pull upstream master
+git push origin master
+```

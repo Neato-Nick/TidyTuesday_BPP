@@ -1,0 +1,58 @@
+---
+title: "4.7.20 Hacky Hour"
+output: html_document
+---
+
+##  Make a gif of beer production data over time using package [gganimate](https://github.com/thomasp85/gganimate).
+**Use US Beer Production data from [tidytuesday challenge](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-03-31/readme.md) and Alcohol and Tobacco Tax and Trade Bureau**
+
+Many of us have research data that include some sort of timecourse and one way to visualize data over a timecourse is to visualize data at each time point using the same x and y axes. Noticing slight changes in data in each time interval can be difficult by just looking side by side, especially if you have many time points.  One way to help spot trends more quickly could be put your plots into a moving image like a gif. Where the axes dont move but the plotted data change. This could also be a really impactful way to show your data in presentations, websites, etc.
+
+**The overall goal is fairly simple. Find some sort of statistic in this data you find interesting, plot it over time, and animate your plots to create a gif.**
+
+This could be as simple as looking at total beer production in US over time or as complex as monitoring grain varieties used in production of micro breweries in Wisconsin over the past 10 years. The choice of data you use is up to you!  
+
+Although this may not be a very difficult exercise, I hope this provides exposure to a new tool that could be useful in visualizing your own data!
+
+#####  **Load Necessary Packages** 
+```{r Open packages, warning=FALSE}
+library(tidyverse)
+library(purrr)
+#install.packages("gganimate")
+library(gganimate)
+#install.packages("gifski")
+library(gifski)
+```
+
+#####  **Data to Use**
+```{r data}
+brewing_materials <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/brewing_materials.csv')
+beer_taxed <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/beer_taxed.csv')
+brewer_size <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/brewer_size.csv')
+beer_states <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-31/beer_states.csv')
+
+
+```
+
+**Examples can be found on [twitter](https://twitter.com/search?q=%23tidytuesday&src=typed_query)**
+
+[example](https://twitter.com/i/status/1247213123280478211) 
+
+[another example](https://twitter.com/i/status/1245636622655213568)
+
+```{r}
+ggplot(brewing_materials, aes(x = type, y = month_current, fill = type))  +
+  geom_bar(stat="identity") + xlab("Type of Material")+
+     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) +
+    facet_wrap(.~year)+
+  ylab("Pounds of Brewing Material") +  ggtitle("Amount of Brewing Material Over Time")
+ 
+
+ggplot(brewer_size, aes(x = brewer_size, y = n_of_brewers, fill = brewer_size))  +
+  geom_bar(stat="identity") + xlab("Size of Brewery")+
+     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) +
+    facet_wrap(.~year)+
+  ylab("Number of Breweries") +  ggtitle("Size of US Breweries Over Time") 
+
+
+```
